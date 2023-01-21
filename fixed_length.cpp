@@ -10,6 +10,7 @@
 #include <cstring>
 #include <sstream>
 
+#include "file_io.hpp"
 #include "types.hpp"
 #include "fixed_length.hpp"
 
@@ -30,8 +31,9 @@ Bit_Set get_code(CodeMap& vars, const char& chr) {
 CodeMap create(Freq_Map& freqs) {
 	CodeMap vars;
 	// kod ostateczny
-	vars.max_code = freqs.size();
-	u32 val = vars.max_code;
+	u32 max_code = freqs.size();
+	u32 val = max_code;
+	vars.bit_width = log2(max_code) + 1;
 
 	// sortowanie wzgledem liczby wystapien
 	using entry = pair<char, u32>;
@@ -73,7 +75,7 @@ Str decode(CodeMap& vars) {
 	auto encoded_bits = bit_vec.size() - 8 + vars.bit_remain;
 	// offset - przesuniecie wzgledem bajtu, idziemy od srodka do konca 
 	// tak aby zaczac od najwiekszej wartosci
-	int offset = vars.bit_width - 1;
+	i32 offset = vars.bit_width - 1;
 	for (u32 i = 0; i < encoded_bits; ++i) {
 		// caly kod zostal wczytany 
 		if (offset < 0) {
@@ -88,7 +90,6 @@ Str decode(CodeMap& vars) {
 }
 
 void encode(CodeMap& vars, Str& str) {
-	vars.bit_width = log2(vars.max_code) + 1;
 	// ktory bit z kolei
 	size_t iter = 0;
 	// string zwierajacy zapis bitowy 
@@ -119,52 +120,37 @@ void save(CodeMap& vars, const char* outname, const char* codename) {
 		throw new exception();
 		return;
 	}
-	FILE* f = fopen(outname, "wb");
-	// zapisujemy zakodowany tekst
-	fwrite(vars.encoded.data(), sizeof(u8), vars.encoded.size(), f);
-	fclose(f);
+	save_file(outname, vars.encoded);
 
-	f = fopen(codename, "wb");
-	// bit_width
-	fwrite(&vars.bit_width,  sizeof(vars.bit_width), 1, f);
+	Bytes code_out;
+	// rozmiar kodu w bitach
+	code_out.push_back(vars.bit_width);
 	// zapisujemy jaka czesc ostatniego bajtu zostala wykorzystana
-	fwrite(&vars.bit_remain,  sizeof(vars.bit_remain), 1, f);
-	for (const auto& it : vars.map) {
-		fwrite(&it.first,  sizeof(char), 1, f);
-		fwrite(&it.second, ceil(BITS / 8.f), 1, f);
-	}
-	fclose(f);
+	code_out.push_back(vars.bit_remain);
+
+    for (const auto& [ch, val] : vars.map) {
+    	code_out.push_back(ch);
+    	code_out.push_back(val.to_ullong());
+    }
+	if (!save_file(codename, code_out)) printf("FAILED!\n");
 }
 
 void load(CodeMap& vars, const char* filename, const char* codename) {
 	// wczytywanie zakodowanego pliku
-	FILE* f = fopen(filename, "r");
-	if (f == nullptr) throw "File does not exist!";
+	load_file(filename, vars.encoded);
+ 	
+	// wczytywanie pliku z kodowaniem // znany jest rozmiar
+ 	Bytes encoded;
+ 	load_file(codename, encoded);
+ 	vars.bit_width  = encoded[0];
+ 	vars.bit_remain = encoded[1];
 
-	if (fseek(f, 0, SEEK_END) != 0) throw exception();
-	vars.size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	vars.encoded = vector<u8>(vars.size);
-	size_t read_size = fread(vars.encoded.data(), sizeof(u8), vars.size, f);
-	if (read_size != vars.size) throw "Incorrect size loaded!";
-	fclose(f);
-
-	// wczytywanie pliku z kodowaniem
-	f = fopen(codename, "rb");
-	if (f == nullptr) throw "File does not exist";
-	if (fseek(f, 0, SEEK_END) != 0) throw exception();
-	auto code_size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	// wczytywanie wykorzystywanej czesci ostatniego bajtu 
-	fread(&vars.bit_width, sizeof(vars.bit_width), 1, f);
-	fread(&vars.bit_remain, sizeof(vars.bit_remain), 1, f);
-	while (ftell(f) < code_size) {
-		char chr; Bit_Set bit_code;
-		fread(&chr, sizeof(chr), 1, f);
-		fread(&bit_code, ceil(BITS / 8.f), 1, f);
+ 	for (u32 i = 2; i < encoded.size();) {
+ 		char chr; Bit_Set bit_code;
+		chr = encoded[i]; 		++i;
+		bit_code = encoded[i]; 	++i;
 		vars.map[chr] = bit_code;
-	}
-	fclose(f);
+ 	}
 }
 
 };

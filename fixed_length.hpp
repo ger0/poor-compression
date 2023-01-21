@@ -5,16 +5,9 @@ namespace fixed_len {
 
 struct CodeMap {
 	std::map<char, Bit_Set> map;
-	// bit size
-	u32 max_code 	= 0;
-	// rozmiar kodu w bitach
-	u8 bit_width 	= 0;
-	// ile bitow ostatniego bajtu zostalo wykorzystane
-	u8 bit_remain 	= 0;
-	// rozmiar calosciowy
-	size_t size 	= 0;
-	// zakodowane bajty
-	std::vector<u8> encoded;
+	u8 bit_width 	= 0; // rozmiar kodu w bitach
+	u8 bit_remain 	= 0; // ile bitow z ostatniego bajtu zostalo uzyte 
+	std::vector<u8> encoded; // zakodowane bajty
 };
 
 void 	print_codes(CodeMap& vars);

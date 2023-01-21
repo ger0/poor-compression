@@ -1,36 +1,10 @@
-#include <bitset>
 #include <cstdio>
-#include <tuple>
-#include <memory>
-#include <vector>
-#include <map>
-#include <cmath>
-#include <iostream>
 #include <cstring>
+#include <memory>
 
 #include "types.hpp"
 #include "fixed_length.hpp"
-
-using std::map;
-
-void error(const char* str = "") {
-	fprintf(stderr, "%s\n", str);
-	exit(EXIT_FAILURE);
-}
-
-// zwraca listę wszystkich znaków
-Str load_file(const char* filename) {
-	FILE* f = fopen(filename, "r");
-	if (f == nullptr) error("Nullptr");
-	if (fseek(f, 0, SEEK_END) != 0) error("Seeking failure");
-	const size_t size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	Str str(size);
-	size_t read_size = fread(str.data(), sizeof(char), size, f);
-	if (read_size != size) error("Incorrect size");
-	fclose(f);
-	return str;
-}
+#include "file_io.hpp"
 
 // zwraca mapę [znak, ilosc wystapien]
 Freq_Map get_char_freq(Str& str) {
@@ -62,26 +36,31 @@ void print_str(Str& str) {
 	}
 }
 
+bool cmp_str(Str& a, Str& b) {
+	for (size_t i = 0; i < b.size(); ++i) {
+		if (a[i] != b[i]) throw std::exception();
+	}
+	return true;
+}
+
 int main(int argc, char* argv[]) {
 	fixed_len::CodeMap code;
 	if (argc == 2) {
-		map<char, u32> chars;
-		auto str = load_file(argv[1]);
+		std::map<char, u32> chars;
+		Str str;
+		if (!load_file(argv[1], str)) printf("Failed!\n");
 		Freq_Map freqs = get_char_freq(str);
 		code = fixed_len::create(freqs);
 		encode(code, str);
 		save(code);
-		print_freqs(freqs);
-		print_codes(code);
-		str = decode(code);
-		print_str(str);
+		Str str1 = decode(code);
+		//cmp_str(str, str1);
+		//print_str(str);
 		return EXIT_SUCCESS;
 	}
 	// else
 	load(code);
-	print_codes(code);
 	auto str = decode(code);
 	print_str(str);
-
 	return EXIT_SUCCESS;
 }
