@@ -43,7 +43,7 @@ FixMap* create(Freq_Map& freqs) {
 	// kod ostateczny
 	u32 max_code = freqs.size();
 	u32 val = max_code;
-	vars->bit_width = log2(max_code) + 1;
+	vars->bit_width = ceil(log2(max_code));
 
 	// sortowanie wzgledem liczby wystapien
 	using entry = pair<char, u32>;

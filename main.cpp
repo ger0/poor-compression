@@ -53,10 +53,12 @@ int main(int argc, char* argv[]) {
 		Str str;
 		if (!load_file(argv[1], str)) printf("Failed!\n");
 		Freq_Map freqs = get_char_freq(str);
+
 		auto huff = huffman::create(freqs);
 		encode(huff, str);
 		save(huff);
-		auto str1 = decode(huff);
+
+		//auto str1 = decode(huff);
 		return EXIT_SUCCESS;
 	}
 	// else

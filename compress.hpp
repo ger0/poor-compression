@@ -7,7 +7,7 @@ struct FixMap;
 
 void 	 print_codes(FixMap* vars);
 
-FixMap*  create(Freq_Map* freqs);
+FixMap*  create(Freq_Map& freqs);
 Str 	 decode(FixMap* vars);
 void 	 encode(FixMap* vars, Str& str);
 
