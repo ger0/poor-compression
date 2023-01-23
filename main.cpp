@@ -57,8 +57,6 @@ int main(int argc, char* argv[]) {
 		encode(huff, str);
 		save(huff);
 		auto str1 = decode(huff);
-		print_str(str1);
-		cmp_str(str, str1);
 		return EXIT_SUCCESS;
 	}
 	// else

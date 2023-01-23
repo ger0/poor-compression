@@ -20,23 +20,30 @@ namespace fixed_len {
 // UZYWAC Z ROZWAGA 
 #define OFFSET_OF(type, field) ((unsigned long) &(((type*) 0)->field))
 
-char get_char(CodeMap& vars, const Bit_Set& set) {
-	for (const auto& [chr, bit_val] : vars.map) {
+struct FixMap {
+	u8 bit_width 	= 0; // rozmiar kodu w bitach
+	u8 bit_remain 	= 0; // ile bitow z ostatniego bajtu zostalo uzyte 
+	Code_Map map; 		 // kodowanie 
+	Bytes encoded; 		 // zakodowane bajty
+};
+
+char get_char(FixMap* vars, const Bit_Set& set) {
+	for (const auto& [chr, bit_val] : vars->map) {
 		if (bit_val == set) return chr;
 	}
 	throw invalid_argument("Code does not exist!");
 }
 
-Bit_Set get_code(CodeMap& vars, const char& chr) {
-	return vars.map.at(chr);
+Bit_Set get_code(FixMap* vars, const char& chr) {
+	return vars->map.at(chr);
 }
 
-CodeMap create(Freq_Map& freqs) {
-	CodeMap vars;
+FixMap* create(Freq_Map& freqs) {
+	FixMap* vars = new FixMap;
 	// kod ostateczny
 	u32 max_code = freqs.size();
 	u32 val = max_code;
-	vars.bit_width = log2(max_code) + 1;
+	vars->bit_width = log2(max_code) + 1;
 
 	// sortowanie wzgledem liczby wystapien
 	using entry = pair<char, u32>;
@@ -51,40 +58,40 @@ CodeMap create(Freq_Map& freqs) {
 			});
 
 	for (const auto& [chr, btst] : sorted) {
-		vars.map[chr] = Bit_Set(val);
+		vars->map[chr] = Bit_Set(val);
 		val--;
 	}
 	return vars;
 }
 
-void print_codes(CodeMap& vars) {
-	for (auto &it : vars.map) {
+void print_codes(FixMap* vars) {
+	for (auto &it : vars->map) {
 		printf("%c: %s\n", it.first, it.second.to_string().c_str());
 	}
 }
 
-Str decode(CodeMap& vars) {
+Str decode(FixMap* vars) {
 	// wektor charow
 	Str str;
 	// wektor pojedynczych bitow (jako bajty zeby bylo latwiej iterowac)
 	Bytes bit_vec;
-	for (const auto &it : vars.encoded) {
+	for (const auto &it : vars->encoded) {
 		for (u8 i = 1; i <= BITS; ++i) {
 			auto val = (it >> (BITS - i)) & 1;
 			bit_vec.push_back(val);
 		}
 	}
 	Bit_Set byte;
-	auto encoded_bits = bit_vec.size() - 8 + vars.bit_remain;
+	auto encoded_bits = bit_vec.size() - 8 + vars->bit_remain;
 	// offset - przesuniecie wzgledem bajtu, idziemy od srodka do konca 
 	// tak aby zaczac od najwiekszej wartosci
-	i32 offset = vars.bit_width - 1;
+	i32 offset = vars->bit_width - 1;
 	for (u32 i = 0; i < encoded_bits; ++i) {
 		// caly kod zostal wczytany 
 		if (offset < 0) {
 			str.push_back(get_char(vars, byte));	
 			byte.reset();
-			offset = vars.bit_width - 1;
+			offset = vars->bit_width - 1;
 		}
 		byte.set(offset, bit_vec[i]);	
 		--offset;
@@ -92,7 +99,7 @@ Str decode(CodeMap& vars) {
 	return str;
 }
 
-void encode(CodeMap& vars, Str& str) {
+void encode(FixMap* vars, Str& str) {
 	// ktory bit z kolei
 	size_t iter = 0;
 	// string zwierajacy zapis bitowy 
@@ -100,8 +107,8 @@ void encode(CodeMap& vars, Str& str) {
 	// zapisuje bity do stringa
 	for (const auto& ch : str) {
 		const auto code_str = get_code(vars, ch).to_string();
-		bit_string += code_str.substr(BITS - vars.bit_width);
-		iter += vars.bit_width;
+		bit_string += code_str.substr(BITS - vars->bit_width);
+		iter += vars->bit_width;
 	}
 	// odczytuje bity ze stringa do bufora
 	Bytes enc_u8;
@@ -113,48 +120,50 @@ void encode(CodeMap& vars, Str& str) {
 		enc_u8.push_back(val);
 		byte.reset();
 	}
-	vars.bit_remain = iter % 8;
-	enc_u8.back() <<= vars.bit_remain;
-	vars.encoded = enc_u8;
+	vars->bit_remain = iter % 8;
+	enc_u8.back() <<= vars->bit_remain;
+	vars->encoded = enc_u8;
 }
 
-void save(CodeMap& vars, const char* outname, const char* codename) {
-	if (vars.encoded.size() == 0) {
+void save(FixMap* vars, const char* outname, const char* codename) {
+	if (vars->encoded.size() == 0) {
 		throw new exception();
 		return;
 	}
-	save_file(outname, vars.encoded);
+	save_file(outname, vars->encoded);
 
 	Bytes code_out;
 	// rozmiar kodu w bitach
-	code_out.push_back(vars.bit_width);
+	code_out.push_back(vars->bit_width);
 	// zapisujemy jaka czesc ostatniego bajtu zostala wykorzystana
-	code_out.push_back(vars.bit_remain);
+	code_out.push_back(vars->bit_remain);
 
-    for (const auto& [ch, val] : vars.map) {
+    for (const auto& [ch, val] : vars->map) {
     	code_out.push_back(ch);
     	code_out.push_back(val.to_ullong());
     }
 	if (!save_file(codename, code_out)) printf("FAILED!\n");
 }
 
-void load(CodeMap& vars, const char* filename, const char* codename) {
+FixMap* load(const char* filename, const char* codename) {
+	FixMap* vars = new FixMap;
 	// wczytywanie zakodowanego pliku
-	load_file(filename, vars.encoded);
+	load_file(filename, vars->encoded);
  	
 	// wczytywanie pliku z kodowaniem // znany jest rozmiar
  	Bytes encoded;
  	load_file(codename, encoded);
- 	vars.bit_width  = encoded[OFFSET_OF(CodeMap, bit_width)];
- 	vars.bit_remain = encoded[OFFSET_OF(CodeMap, bit_remain)];
- 	auto offset = sizeof(vars.bit_width) + sizeof(vars.bit_remain);
+ 	vars->bit_width  = encoded[OFFSET_OF(FixMap, bit_width)];
+ 	vars->bit_remain = encoded[OFFSET_OF(FixMap, bit_remain)];
+ 	auto offset = sizeof(vars->bit_width) + sizeof(vars->bit_remain);
 
  	for (u32 i = offset; i < encoded.size();) {
  		char chr; Bit_Set bit_code;
 		chr = encoded[i]; 		++i;
 		bit_code = encoded[i]; 	++i;
-		vars.map[chr] = bit_code;
+		vars->map[chr] = bit_code;
  	}
+ 	return vars;
 }
 
 };

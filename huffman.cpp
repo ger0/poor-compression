@@ -199,15 +199,16 @@ void save(HuffMap* huff, const char* outf, const char* codef) {
 	code_out.push_back(huff->last_bits);
     for (const auto& [ch, val] : huff->codes) {
     	// dlugosc kodu max 255?
-    	u8 length = val.size();
-		auto temp = Bytes(length);
+    	u8 length 	= val.size();
+    	u8 byte_len = length / BITS + 1;
+		auto temp = Bytes(byte_len);
 
     	code_out.push_back(ch); 		// znak
     	code_out.push_back(length); 	// liczba bajtow na kod
     	auto bit_set = bitset<256>(val.c_str());
 
     	ul bits_data = bit_set.to_ulong();
-    	memcpy(temp.data(), &bits_data, length);
+    	memcpy(temp.data(), &bits_data, byte_len);
 
     	code_out.insert(code_out.end(), begin(temp), end(temp));
     }
@@ -233,7 +234,7 @@ HuffMap* load(const char* inf, const char* codef) {
 
 		auto temp 	= Bytes(byte_len);
 		ul value 	= 0;
-		memcpy(&value, encoded.data() + i, length); i += length;
+		memcpy(&value, encoded.data() + i, byte_len); i += byte_len;
 
 		auto bit_code = bitset<256>(value); 
 		bits bit_str = bit_code.to_string();

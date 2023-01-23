@@ -3,12 +3,7 @@
 
 namespace fixed_len {
 
-struct FixMap {
-	u8 bit_width 	= 0; // rozmiar kodu w bitach
-	u8 bit_remain 	= 0; // ile bitow z ostatniego bajtu zostalo uzyte 
-	Code_Map map; 		 // kodowanie 
-	Bytes encoded; 		 // zakodowane bajty
-};
+struct FixMap;
 
 void 	 print_codes(FixMap* vars);
 
