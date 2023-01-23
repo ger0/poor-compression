@@ -8,9 +8,11 @@
 using u8 	= uint_fast8_t;
 using u16 	= uint_fast16_t;
 using u32 	= uint32_t;
+using u64 	= uint64_t;
 using i8 	= int_fast8_t;
 using i16 	= int_fast16_t;
 using i32 	= int32_t;
+using i64 	= int64_t;
 
 using ul 	= unsigned long;
 using Str 	= std::vector<char>;

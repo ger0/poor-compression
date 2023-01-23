@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "types.hpp"
-#include "fixed_length.hpp"
+#include "compress.hpp"
 #include "file_io.hpp"
 
 // zwraca mapę [znak, ilosc wystapien]
@@ -34,33 +34,36 @@ void print_str(Str& str) {
 	for (const auto& chr: str) {
 		printf("%c", chr);
 	}
+	printf("\n");
 }
 
 bool cmp_str(Str& a, Str& b) {
 	for (size_t i = 0; i < b.size(); ++i) {
-		if (a[i] != b[i]) throw std::exception();
+		if (a[i] != b[i]) {
+			printf("\n%c!=%c\n", a[i], b[i]);
+			throw std::exception();
+		}
 	}
 	return true;
 }
 
 int main(int argc, char* argv[]) {
-	fixed_len::CodeMap code;
 	if (argc == 2) {
 		std::map<char, u32> chars;
 		Str str;
 		if (!load_file(argv[1], str)) printf("Failed!\n");
 		Freq_Map freqs = get_char_freq(str);
-		code = fixed_len::create(freqs);
-		encode(code, str);
-		save(code);
-		Str str1 = decode(code);
-		//cmp_str(str, str1);
-		//print_str(str);
+		auto huff = huffman::create(freqs);
+		encode(huff, str);
+		save(huff);
+		auto str1 = decode(huff);
+		print_str(str1);
+		cmp_str(str, str1);
 		return EXIT_SUCCESS;
 	}
 	// else
-	load(code);
-	auto str = decode(code);
+	auto huff = huffman::load();
+	auto str = huffman::decode(huff);
 	print_str(str);
 	return EXIT_SUCCESS;
 }

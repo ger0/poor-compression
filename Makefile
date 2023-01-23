@@ -1,5 +1,5 @@
 CXX=clang++
-MAIN_SOURCES=main.cpp fixed_length.cpp
+MAIN_SOURCES=main.cpp fixed_length.cpp huffman.cpp
 MAIN_OBJS=$(MAIN_SOURCES:%.cpp=build/%.cpp.o)
 CCFLAGS=-g -Wextra -Wall -pedantic -Wall -Iinclude -I. --std=c++20
 CXXFLAGS=$(CCFLAGS)

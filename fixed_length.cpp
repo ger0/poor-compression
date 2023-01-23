@@ -12,10 +12,13 @@
 
 #include "file_io.hpp"
 #include "types.hpp"
-#include "fixed_length.hpp"
+#include "compress.hpp"
 
 using namespace std;
 namespace fixed_len {
+
+// UZYWAC Z ROZWAGA 
+#define OFFSET_OF(type, field) ((unsigned long) &(((type*) 0)->field))
 
 char get_char(CodeMap& vars, const Bit_Set& set) {
 	for (const auto& [chr, bit_val] : vars.map) {
@@ -64,7 +67,7 @@ Str decode(CodeMap& vars) {
 	// wektor charow
 	Str str;
 	// wektor pojedynczych bitow (jako bajty zeby bylo latwiej iterowac)
-	vector<u8> bit_vec;
+	Bytes bit_vec;
 	for (const auto &it : vars.encoded) {
 		for (u8 i = 1; i <= BITS; ++i) {
 			auto val = (it >> (BITS - i)) & 1;
@@ -101,7 +104,7 @@ void encode(CodeMap& vars, Str& str) {
 		iter += vars.bit_width;
 	}
 	// odczytuje bity ze stringa do bufora
-	vector<u8> enc_u8;
+	Bytes enc_u8;
 	istringstream bit_stream(bit_string);
 	Bit_Set byte;
 	while (!bit_stream.eof()) {
@@ -142,10 +145,11 @@ void load(CodeMap& vars, const char* filename, const char* codename) {
 	// wczytywanie pliku z kodowaniem // znany jest rozmiar
  	Bytes encoded;
  	load_file(codename, encoded);
- 	vars.bit_width  = encoded[0];
- 	vars.bit_remain = encoded[1];
+ 	vars.bit_width  = encoded[OFFSET_OF(CodeMap, bit_width)];
+ 	vars.bit_remain = encoded[OFFSET_OF(CodeMap, bit_remain)];
+ 	auto offset = sizeof(vars.bit_width) + sizeof(vars.bit_remain);
 
- 	for (u32 i = 2; i < encoded.size();) {
+ 	for (u32 i = offset; i < encoded.size();) {
  		char chr; Bit_Set bit_code;
 		chr = encoded[i]; 		++i;
 		bit_code = encoded[i]; 	++i;
