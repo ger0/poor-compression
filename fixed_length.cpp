@@ -15,7 +15,7 @@
 #include "compress.hpp"
 
 using namespace std;
-namespace fixed_len {
+using Code_Map 	= std::map<char, Bit_Set>;
 
 // UZYWAC Z ROZWAGA 
 #define OFFSET_OF(type, field) ((unsigned long) &(((type*) 0)->field))
@@ -38,7 +38,7 @@ Bit_Set get_code(FixMap* vars, const char& chr) {
 	return vars->map.at(chr);
 }
 
-FixMap* create(Freq_Map& freqs) {
+template<> FixMap* create(Freq_Map& freqs) {
 	FixMap* vars = new FixMap;
 	// kod ostateczny
 	u32 max_code = freqs.size();
@@ -64,13 +64,13 @@ FixMap* create(Freq_Map& freqs) {
 	return vars;
 }
 
-void print_codes(FixMap* vars) {
+template<> void print_codes(FixMap* vars) {
 	for (auto &it : vars->map) {
 		printf("%c: %s\n", it.first, it.second.to_string().c_str());
 	}
 }
 
-Str decode(FixMap* vars) {
+template<> Str decode(FixMap* vars) {
 	// wektor charow
 	Str str;
 	// wektor pojedynczych bitow (jako bajty zeby bylo latwiej iterowac)
@@ -99,7 +99,7 @@ Str decode(FixMap* vars) {
 	return str;
 }
 
-void encode(FixMap* vars, Str& str) {
+template<> void encode(FixMap* vars, Str& str) {
 	// ktory bit z kolei
 	size_t iter = 0;
 	// string zwierajacy zapis bitowy 
@@ -125,7 +125,7 @@ void encode(FixMap* vars, Str& str) {
 	vars->encoded = enc_u8;
 }
 
-void save(FixMap* vars, const char* outname, const char* codename) {
+template<> void save(FixMap* vars, const char* outname, const char* codename) {
 	if (vars->encoded.size() == 0) {
 		throw new exception();
 		return;
@@ -145,7 +145,7 @@ void save(FixMap* vars, const char* outname, const char* codename) {
 	if (!save_file(codename, code_out)) printf("FAILED!\n");
 }
 
-FixMap* load(const char* filename, const char* codename) {
+template<> FixMap* load(const char* filename, const char* codename) {
 	FixMap* vars = new FixMap;
 	// wczytywanie zakodowanego pliku
 	load_file(filename, vars->encoded);
@@ -165,5 +165,3 @@ FixMap* load(const char* filename, const char* codename) {
  	}
  	return vars;
 }
-
-};

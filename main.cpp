@@ -54,16 +54,16 @@ int main(int argc, char* argv[]) {
 		if (!load_file(argv[1], str)) printf("Failed!\n");
 		Freq_Map freqs = get_char_freq(str);
 
-		auto huff = huffman::create(freqs);
+		auto huff = create<HuffMap>(freqs);
 		encode(huff, str);
-		save(huff);
+		save(huff, "output.bin", "codes.bin");
 
 		//auto str1 = decode(huff);
 		return EXIT_SUCCESS;
 	}
 	// else
-	auto huff = huffman::load();
-	auto str = huffman::decode(huff);
+	auto huff = load<HuffMap>("output.bin", "codes.bin");
+	auto str = decode(huff);
 	print_str(str);
 	return EXIT_SUCCESS;
 }

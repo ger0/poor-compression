@@ -22,7 +22,6 @@ constexpr size_t 	MAX = sizeof(ul) * 8;
 
 using Freq_Map 	= std::map<char, u32>;
 using Bit_Set 	= std::bitset<BITS>;
-using Code_Map 	= std::map<char, Bit_Set>;
 using Bytes 	= std::vector<u8>;
 
 template<typename... T>

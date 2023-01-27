@@ -15,7 +15,6 @@
 #include "compress.hpp"
 
 using namespace std;
-namespace huffman {
 
 using ch_freq = pair<char, u32>;
 using bits = string;
@@ -100,7 +99,7 @@ void cache_codes(Node* node, bits code, HuffMap* huff) {
 	cache_codes(node->right.get(), 	code + '1', huff);
 }
 
-HuffMap* create(Freq_Map& freqs) {
+template<> HuffMap* create(Freq_Map& freqs) {
 	HuffMap* huff = new HuffMap;
 	// wypelniamy tablice
 	for (const auto& [chr, freq]: freqs) {
@@ -115,7 +114,7 @@ HuffMap* create(Freq_Map& freqs) {
 	cache_codes(huff->tree.get(), "", huff);
 	return huff;
 }
-void print_codes(HuffMap* huff) {
+template<> void print_codes(HuffMap* huff) {
 	for (const auto& [chr, code]: huff->codes) {
 		printf(":%c: %s\n", chr, code.c_str());
 	}
@@ -137,7 +136,7 @@ void remove_leading_zeros(bits& bit_str) {
 	bit_str.erase(0, std::min(bit_str.find_first_not_of('0'), bit_str.size()-1));
 }
 	
-Str decode(HuffMap* huff) {
+template<> Str decode(HuffMap* huff) {
 	// ulatwienie przeszukiwania
 	cache_chars(huff);
 	// wektor charow
@@ -163,7 +162,7 @@ Str decode(HuffMap* huff) {
 	return str;
 }
 
-void encode(HuffMap* huff, Str& str) {
+template<> void encode(HuffMap* huff, Str& str) {
 	// string zwierajacy zapis bitowy 
 	bits bit_string;
 	// zapisuje bity do stringa
@@ -188,7 +187,7 @@ void encode(HuffMap* huff, Str& str) {
 	huff->encoded = enc_u8;
 }
 
-void save(HuffMap* huff, const char* outf, const char* codef) {
+template<> void save(HuffMap* huff, const char* outf, const char* codef) {
 	if (huff->encoded.size() == 0) {
 		throw new exception();
 		return;
@@ -215,7 +214,7 @@ void save(HuffMap* huff, const char* outf, const char* codef) {
 	if (!save_file(codef, code_out)) printf("FAILED!\n");
 }
 
-HuffMap* load(const char* inf, const char* codef) {
+template<> HuffMap* load(const char* inf, const char* codef) {
 	HuffMap* huff = new HuffMap;
 	// wczytywanie zakodowanego pliku
 	load_file(inf, huff->encoded);
@@ -246,5 +245,3 @@ HuffMap* load(const char* inf, const char* codef) {
  	}
  	return huff;
 }
-
-};

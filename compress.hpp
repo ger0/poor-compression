@@ -1,32 +1,24 @@
 #pragma once
 #include "types.hpp"
-
-namespace fixed_len {
-
-struct FixMap;
-
-void 	 print_codes(FixMap* vars);
-
-FixMap*  create(Freq_Map& freqs);
-Str 	 decode(FixMap* vars);
-void 	 encode(FixMap* vars, Str& str);
-
-void 	 save(FixMap* vars, const char* out = "output.bin", const char* code = "codes.bin");
-FixMap*  load(const char* in  = "output.bin", const char* code = "codes.bin");
-
-};
-
-namespace huffman {
+#define _generic_ template<typename T>
 
 struct HuffMap;
+struct FixMap;
 
-void 	 print_codes(HuffMap* huff);
+_generic_
+void print_codes(T*);
 
-HuffMap* create(Freq_Map& freqs);
-Str 	 decode(HuffMap* huff);
-void 	 encode(HuffMap* huff, Str& str);
+_generic_
+T*  create(Freq_Map&);
 
-void 	 save(HuffMap* huff, const char* outf = "huff.bin", const char* codef = "huffc.bin");
-HuffMap* load(const char* inf  = "huff.bin", const char* codef = "huffc.bin");
+_generic_
+Str 	 decode(T*);
 
-};
+_generic_
+void 	 encode(T*, Str&);
+
+_generic_
+void 	 save(T*, const char*, const char*);
+
+_generic_
+T*  load(const char*, const char*);
